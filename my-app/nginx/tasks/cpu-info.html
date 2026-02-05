@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+
+<body
+  style="background:#000;color:#0f0;font-family:monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;">
+  <h2>SYSTEM LOAD (HOST)</h2>
+  <div id="l" style="font-size:5vw;">0.00</div>
+  <script>
+    setInterval(() => {
+      fetch('/api/load')
+        .then(r => r.text())
+        .then(t => document.getElementById('l').innerText = t)
+        .catch(e => console.log("Error fetching load"));
+    }, 1000);
+  </script>
+</body>
+
+</html>

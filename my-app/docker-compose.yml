@@ -1,0 +1,53 @@
+services:
+  # Ваш главный балансировщик (Nginx)
+  nginx:
+    build:
+      context: ./nginx # Собирает образ из вашего Dockerfile в текущей папке
+    ports:
+      - "80:8080"
+      - "443:8443" # Пробрасываем порт 443 наружу
+    volumes:
+      # Пробрасываем конфигурацию и сертификаты для Nginx (только для чтения, так как Nginx будет использовать их, а не изменять)
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+    networks:
+      - app_network
+    depends_on:
+      - web_red
+      - web_blue
+      - apache
+  # Если вы хотите использовать certbot для получения сертификатов внутри контейнера, раскомментируйте этот сервис и настройте его соответствующим образом.На локале не настраивала, т.к невозможно нормально указать домен для моего провайдреа, а вот в aws работает хорошо
+  # certbot:
+  #   image: certbot/certbot
+  #   volumes:
+  #     - ./certbot/conf:/etc/letsencrypt:rw
+  #     - ./certbot/www:/var/www/certbot:rw
+  #   networks:
+  #     - app_network
+  # Красный сервер
+  web_red:
+    # Используем официальный образ Nginx, так как нам не нужно ничего настраивать внутри контейнера для этих серверов, просто показывать разные страницы
+    image: nginx:1.24-alpine
+    volumes:
+      - ./nginx/tasks/red/redblue.html:/usr/share/nginx/html/index.html:ro
+    networks:
+      - app_network
+
+  # Синий сервер
+  web_blue:
+    image: nginx:1.24-alpine
+    volumes:
+      - ./nginx/tasks/blue/redblue.html:/usr/share/nginx/html/index.html:ro
+    networks:
+      - app_network
+
+  # Apache с PHP
+  apache:
+    build:
+      context: ./apache # Путь к папке, где лежит Dockerfile для Apache
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
